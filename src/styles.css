@@ -258,3 +258,6 @@
 .photo-card-placeholder span:last-child,.image-preview-placeholder span:last-child{color:var(--teal);font:9px var(--mono);letter-spacing:.15em}
 .image-preview-placeholder{width:min(90vw,1050px);min-height:min(62svh,620px);gap:16px;align-content:center;border:1px solid #293b37}
 @media(max-width:700px){.aviation-supporting-text{font-size:13px}.photo-card-placeholder{aspect-ratio:1.55}.image-preview-placeholder{min-height:48svh}.aviation-photo-gallery .photo-card figcaption{padding:13px}}
+
+/* Keep the full portrait visible on phones without changing the desktop hero. */
+@media(max-width:600px){.hero-photo-frame{height:auto;aspect-ratio:3/4}.hero-photo-preview img{object-position:center center}}
