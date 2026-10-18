@@ -603,16 +603,71 @@ function PageIntro({ number, eyebrow, title, description, className = '' }: { nu
   return <section className={`page-intro ${className}`.trim()}><div className="page-intro-main"><BackButton/><Eyebrow>{number} / {eyebrow}</Eyebrow><h1>{title}</h1><p>{description}</p></div><span className="intro-index">SP<br/>—<br/>2026</span></section>
 }
 
+const aboutPassage = [
+  <>My name is <strong>Shandy Putra</strong>, and I’m a Grade 12 student at Kharisma Bangsa School in <strong>Indonesia</strong>. My curiosity about the world began in childhood, when I enjoyed building with LEGO and exploring how things worked. I was fascinated by airplanes, particularly the <strong>Boeing 777 and Airbus A350</strong>, as well as everyday technology such as computers, smartphones, and air conditioners. What started as childhood curiosity gradually developed into a deeper interest in science, engineering, and technology.</>,
+  <>Today, I’m particularly interested in <strong>artificial intelligence, computer science, and software development.</strong> I enjoy mathematics, physics, and biology, especially when I can apply what I learn through practical projects, experimentation, and research. Participating in national and international competitions has allowed me to challenge myself, explore unfamiliar problems, and earn recognition for my work.</>,
+  <>However, my journey has never been only about achievements. I believe <strong>failure is one of the most important parts of becoming better.</strong> My first badminton competition ended in a 21–0 loss. Instead of giving up, I trained harder, practised whenever I could, and continued competing. Eventually, I earned multiple podium finishes, including first place in men’s doubles and second place in men’s singles. <strong>That experience taught me that setbacks do not define my abilities; how I respond to them determines how much I can grow.</strong></>,
+  <>I carry the same mindset into academics, research, and programming. Not every idea works on the first attempt, and mistakes are inevitable when exploring something new. I see them as opportunities to identify weaknesses, refine my approach, and improve. <strong>For me, persistence means more than repeatedly trying; it means learning from each attempt and coming back better prepared.</strong></>,
+  <>Beyond academics, I enjoy aviation, modified cars, particularly <strong>Liberty Walk and Pandem designs</strong>, travelling, badminton, and spending time with my eight cats.</>,
+  <>Looking ahead, I want to explore the possibilities of AI and engineering by building useful projects, conducting research, and solving real-world problems. <strong>I’m driven by curiosity, motivated by challenges, and determined to turn every experience, including failure, into an opportunity to grow.</strong></>,
+]
+
+function aboutNodeText(node: React.ReactNode): string {
+  if (typeof node === 'string' || typeof node === 'number') return String(node)
+  if (Array.isArray(node)) return node.map(aboutNodeText).join('')
+  if (React.isValidElement<{ children?: React.ReactNode }>(node)) return aboutNodeText(node.props.children)
+  return ''
+}
+
+function revealAboutText(node: React.ReactNode, remaining: { value: number }): React.ReactNode {
+  if (typeof node === 'string' || typeof node === 'number') {
+    const visible = String(node).slice(0, Math.max(0, remaining.value))
+    remaining.value -= visible.length
+    return visible
+  }
+  if (Array.isArray(node)) return node.map((child) => revealAboutText(child, remaining))
+  if (React.isValidElement<{ children?: React.ReactNode }>(node)) {
+    return React.cloneElement(node, { children: revealAboutText(node.props.children, remaining) })
+  }
+  return null
+}
+
+const aboutPassageLength = aboutPassage.reduce((total, paragraph) => total + aboutNodeText(paragraph).length, 0)
+const aboutPassageSessionKey = 'shandy-about-passage-typed'
+
+function AboutEssay() {
+  const hasTypedBefore = () => {
+    try { return window.sessionStorage.getItem(aboutPassageSessionKey) === 'true' } catch { return false }
+  }
+  const [visibleCharacters, setVisibleCharacters] = useState(() => hasTypedBefore() ? aboutPassageLength : 0)
+
+  useEffect(() => {
+    if (visibleCharacters >= aboutPassageLength) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setVisibleCharacters(aboutPassageLength)
+      try { window.sessionStorage.setItem(aboutPassageSessionKey, 'true') } catch { /* Storage may be disabled. */ }
+      return
+    }
+
+    let count = 0
+    const timer = window.setInterval(() => {
+      count = Math.min(count + 4, aboutPassageLength)
+      setVisibleCharacters(count)
+      if (count >= aboutPassageLength) {
+        window.clearInterval(timer)
+        try { window.sessionStorage.setItem(aboutPassageSessionKey, 'true') } catch { /* Storage may be disabled. */ }
+      }
+    }, 16)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  let remaining = { value: visibleCharacters }
+  return <div className="about-essay-copy" aria-live="off">{aboutPassage.map((paragraph, index) => <p key={index}>{revealAboutText(paragraph, remaining)}</p>)}</div>
+}
+
 function About() {
   usePageMeta('About', 'A personal introduction and background for Shandy Putra.')
-  return <PageFrame><PageIntro number="02" eyebrow="ABOUT ME" title={<>About<br/><em>me.</em></>} description="A personal introduction and background, in my own words."/><section className="section-pad about-essay"><div className="about-essay-heading"><Eyebrow>IN MY OWN WORDS</Eyebrow><h2>The story<br/><em>so far.</em></h2></div><div className="about-essay-copy">
-    <p>My name is <strong>Shandy Putra</strong>, and I’m a Grade 12 student at Kharisma Bangsa School in <strong>Indonesia</strong>. My curiosity about the world began in childhood, when I enjoyed building with LEGO and exploring how things worked. I was fascinated by airplanes, particularly the <strong>Boeing 777 and Airbus A350</strong>, as well as everyday technology such as computers, smartphones, and air conditioners. What started as childhood curiosity gradually developed into a deeper interest in science, engineering, and technology.</p>
-    <p>Today, I’m particularly interested in <strong>artificial intelligence, computer science, and software development.</strong> I enjoy mathematics, physics, and biology, especially when I can apply what I learn through practical projects, experimentation, and research. Participating in national and international competitions has allowed me to challenge myself, explore unfamiliar problems, and earn recognition for my work.</p>
-    <p>However, my journey has never been only about achievements. I believe <strong>failure is one of the most important parts of becoming better.</strong> My first badminton competition ended in a 21–0 loss. Instead of giving up, I trained harder, practised whenever I could, and continued competing. Eventually, I earned multiple podium finishes, including first place in men’s doubles and second place in men’s singles. <strong>That experience taught me that setbacks do not define my abilities; how I respond to them determines how much I can grow.</strong></p>
-    <p>I carry the same mindset into academics, research, and programming. Not every idea works on the first attempt, and mistakes are inevitable when exploring something new. I see them as opportunities to identify weaknesses, refine my approach, and improve. <strong>For me, persistence means more than repeatedly trying; it means learning from each attempt and coming back better prepared.</strong></p>
-    <p>Beyond academics, I enjoy aviation, modified cars, particularly <strong>Liberty Walk and Pandem designs</strong>, travelling, badminton, and spending time with my eight cats.</p>
-    <p>Looking ahead, I want to explore the possibilities of AI and engineering by building useful projects, conducting research, and solving real-world problems. <strong>I’m driven by curiosity, motivated by challenges, and determined to turn every experience, including failure, into an opportunity to grow.</strong></p>
-  </div></section><section className="section-pad interest-section"><SectionTitle kicker="INTERESTS">A few directions.</SectionTitle><div className="interest-grid">{interests.filter((item) => item.title !== 'Pets').map((item) => <Link to={item.path} className="interest-card" key={item.path}><span className="card-number">{item.index} /</span><h3>{item.title}</h3><p>{item.note}</p><span className="card-arrow">↗</span></Link>)}</div></section></PageFrame>
+  return <PageFrame><PageIntro number="02" eyebrow="ABOUT ME" title={<>About<br/><em>me.</em></>} description="A personal introduction and background, in my own words."/><section className="section-pad about-essay"><div className="about-essay-heading"><Eyebrow>IN MY OWN WORDS</Eyebrow><h2>The story<br/><em>so far.</em></h2></div><AboutEssay/></section><section className="section-pad interest-section"><SectionTitle kicker="INTERESTS">A few directions.</SectionTitle><div className="interest-grid">{interests.filter((item) => item.title !== 'Pets').map((item) => <Link to={item.path} className="interest-card" key={item.path}><span className="card-number">{item.index} /</span><h3>{item.title}</h3><p>{item.note}</p><span className="card-arrow">↗</span></Link>)}</div></section></PageFrame>
 }
 
 function ProjectsPage() {
@@ -636,11 +691,12 @@ function InterestFeature({ title, intro, empty, variant }: { title: string; intr
 function BadmintonFeature() {
   usePageMeta('Badminton', 'Badminton interest and verified competition results.')
   const records = achievements.filter((item) => item.category === 'badminton')
-  return <PageFrame><PageIntro number="08" eyebrow="INTERESTS / BADMINTON" title={<>The game<br/><em>continues.</em></>} description="A personal interest with a record of verified competition results."/><section className="section-pad badminton-section"><SectionTitle kicker="ON AND OFF THE COURT">A few winning moments.</SectionTitle><PhotoGallery photos={badmintonPhotos}/><div className="highlight-list badminton-records">{records.map((item, index) => <article className="highlight-row" key={item.title + index}><span className="row-number">0{index + 1}</span><div><h3>{item.title}</h3>{item.detail && <p>{item.detail}</p>}</div><span className="row-year">{item.year}</span></article>)}</div></section></PageFrame>
+  return <PageFrame><PageIntro number="08" eyebrow="INTERESTS / BADMINTON" title={<>The game<br/><em>continues.</em></>} description="A lifelong passion on the court."/><section className="section-pad badminton-section"><SectionTitle kicker="ON AND OFF THE COURT">A few winning moments.</SectionTitle><PhotoGallery photos={badmintonPhotos}/><div className="highlight-list badminton-records">{records.map((item, index) => <article className="highlight-row" key={item.title + index}><span className="row-number">0{index + 1}</span><div><h3>{item.title}</h3>{item.detail && <p>{item.detail}</p>}</div><span className="row-year">{item.year}</span></article>)}</div></section></PageFrame>
 }
 function Contact() {
   usePageMeta('Contact', 'Contact Shandy Putra.')
-  return <PageFrame><PageIntro number="11" eyebrow="CONTACT" title={<>Start a<br/><em>conversation.</em></>} description="For admissions, competition, school, or collaboration enquiries."/><section className="section-pad contact-body"><Eyebrow>FIND ME ONLINE</Eyebrow><div className="contact-cards"><a className="contact-card" href="https://www.instagram.com/s_pratama26/" target="_blank" rel="noreferrer" aria-label="Instagram profile @s_pratama26, opens in a new tab"><span className="contact-card-kicker">01 / SOCIAL</span><span className="contact-card-title">Instagram</span><span className="contact-card-detail">@s_pratama26</span><span className="contact-card-arrow" aria-hidden="true">↗</span></a><div className="contact-card contact-card-upcoming"><span className="contact-card-kicker">02 / NETWORK</span><span className="contact-card-title">LinkedIn</span><span className="contact-card-detail">Coming soon</span><span className="contact-card-status">SOON</span></div></div></section></PageFrame>
+  const contactEmail = ['shandyitsme26', 'gmail.com'].join(String.fromCharCode(64))
+  return <PageFrame><PageIntro number="11" eyebrow="CONTACT" title={<>Start a<br/><em>conversation.</em></>} description="For projects, competition info, school stuff, or just to hang out."/><section className="section-pad contact-body"><Eyebrow>FIND ME ONLINE</Eyebrow><div className="contact-cards"><a className="contact-card" href="https://www.instagram.com/s_pratama26/" target="_blank" rel="noreferrer" aria-label="Open Instagram profile in a new tab"><span className="contact-card-kicker">01 / SOCIAL</span><span className="contact-card-title">Instagram</span><span className="contact-card-arrow" aria-hidden="true">↗</span></a><div className="contact-card contact-card-upcoming"><span className="contact-card-kicker">02 / NETWORK</span><span className="contact-card-title">LinkedIn</span><span className="contact-card-status">SOON</span></div><a className="contact-card" href={`mailto:${contactEmail}`} aria-label="Compose an email to Shandy"><span className="contact-card-kicker">03 / EMAIL</span><span className="contact-card-title">Email me</span><span className="contact-card-arrow" aria-hidden="true">↗</span></a><a className="contact-card" href="https://github.com/shandypratamaa" target="_blank" rel="noreferrer" aria-label="Open GitHub profile in a new tab"><span className="contact-card-kicker">04 / CODE</span><span className="contact-card-title">GitHub</span><span className="contact-card-arrow" aria-hidden="true">↗</span></a></div></section></PageFrame>
 }
 function Aviation() {
   usePageMeta('Aviation', 'A personal journal about the aircraft that have inspired Shandy Putra since childhood.')
