@@ -458,9 +458,39 @@ function ProjectShowcase() {
 function Home() {
   usePageMeta('Portfolio', 'Selected achievements, interests, and work from Shandy Putra.')
   const selected = achievements.filter((item) => ['international', 'olympiad', 'research'].includes(item.category)).slice(0, 3)
+  const tagline = 'Curious by Nature. Driven to Discover.'
+  const [typedTagline, setTypedTagline] = useState('')
+
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setTypedTagline(tagline)
+      return
+    }
+
+    let character = 0
+    let timer = 0
+    const typeNextCharacter = () => {
+      character += 1
+      setTypedTagline(tagline.slice(0, character))
+      if (character < tagline.length) {
+        timer = window.setTimeout(typeNextCharacter, 55)
+        return
+      }
+
+      timer = window.setTimeout(() => {
+        character = 0
+        setTypedTagline('')
+        timer = window.setTimeout(typeNextCharacter, 160)
+      }, 3000 + Math.random() * 2000)
+    }
+
+    timer = window.setTimeout(typeNextCharacter, 55)
+    return () => window.clearTimeout(timer)
+  }, [])
+
   return <PageFrame>
     <section className="hero" id="top">
-      <div className="hero-copy"><Eyebrow>PORTFOLIO · 2026</Eyebrow><h1>Shandy<br/><span>Putra</span><sup>01</sup></h1><p className="hero-subtitle">Curious by Nature. Driven to Discover.</p></div>
+      <div className="hero-copy"><Eyebrow>PORTFOLIO · 2026</Eyebrow><h1>Shandy<br/><span>Putra</span><sup>01</sup></h1><p className="hero-subtitle" aria-label={tagline}><span className="hero-subtitle-measure" aria-hidden="true">{tagline}</span><span className="hero-subtitle-typed" aria-hidden="true">{typedTagline}</span></p></div>
       <div className="hero-photo-frame"><HeroPhotoPreview/></div>
       <div className="hero-meta"><span>SHANDY PUTRA</span><span>01 — 11 / PORTFOLIO</span></div>
     </section>
@@ -519,27 +549,53 @@ function AchievementCertificateViewer({ achievement, onClose, trigger }: { achie
       {achievement.certificates?.length ? <div className="certificate-gallery">{achievement.certificates.map((certificate) => <figure className="certificate-item" key={certificate.src}>
         <div className="certificate-image-frame"><img src={certificate.src} alt={certificate.label}/><div className="certificate-watermark" aria-hidden="true"><span>Shandy</span><span>Shandy</span><span>Shandy</span><span>Shandy</span><span>Shandy</span></div></div>
         <figcaption>{certificate.label}</figcaption>
-      </figure>)}</div> : <div className="certificate-empty"><span aria-hidden="true">＋</span><p>No certificate for this achievement was included in the Certificates folder yet.</p></div>}
+      </figure>)}</div> : <div className="certificate-empty"><span aria-hidden="true">＋</span><p>Certificate coming soon!</p></div>}
     </section>
   </div>, document.body)
 }
 function Achievements() {
   usePageMeta('Achievements', 'Verified competition results, academic achievements, badminton, and community activity.')
   const [filter, setFilter] = useState<'all' | AchievementCategory>('all')
+  const [search, setSearch] = useState('')
   const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null)
   const certificateTrigger = useRef<HTMLButtonElement>(null)
+  const normalizedSearch = search.trim().toLowerCase()
   const filtered = achievements
-    .filter((item) => filter === 'all' || item.category === filter)
+    .filter((item) => (filter === 'all' || item.category === filter) && (!normalizedSearch || `${item.title} ${item.detail ?? ''} ${item.year ?? ''} ${categoryLabels[item.category]}`.toLowerCase().includes(normalizedSearch)))
     .sort((a, b) => Number(b.year?.match(/\d{4}/)?.[0] ?? 0) - Number(a.year?.match(/\d{4}/)?.[0] ?? 0))
+  const yearValues = achievements.flatMap((item) => item.year?.match(/\d{4}/g)?.map(Number) ?? [])
+  const yearRange = yearValues.length ? `${Math.min(...yearValues)}–${Math.max(...yearValues)}` : '—'
+  const featured = [
+    achievements.find((item) => item.title.startsWith('IRPrO')),
+    achievements.find((item) => item.title.includes('Grok Academy Australia Python Competition (Beginners)')),
+  ].filter((item): item is Achievement => Boolean(item))
+  const grouped = new Map<string, { item: Achievement; index: number }[]>()
+  filtered.forEach((item, index) => {
+    const year = item.year ?? 'Year not listed'
+    grouped.set(year, [...(grouped.get(year) ?? []), { item, index }])
+  })
+  const stats = [
+    { value: achievements.length.toString(), label: 'Achievement records', mark: '01' },
+    { value: achievements.filter((item) => item.category === 'olympiad').length.toString(), label: 'Olympiad results', mark: '02' },
+    { value: achievements.filter((item) => item.category === 'research').length.toString(), label: 'Research records', mark: '03' },
+    { value: yearRange, label: 'Years represented', mark: '04' },
+  ]
+  const openRecord = (item: Achievement, button: HTMLButtonElement) => {
+    certificateTrigger.current = button
+    setSelectedAchievement(item)
+  }
   return <PageFrame><PageIntro className="achievements-intro" number="01" eyebrow="THE RECORD" title={<>Earned,<br/><em>over time.</em></>} description="A curated history of my competition results, academic milestones, and key participations."/>
-    <section className="section-pad records-section"><div className="filter-bar" role="group" aria-label="Filter achievements by category">{achievementFilters.map((item) => <button key={item} className={`filter-button ${filter === item ? 'selected' : ''}`} aria-pressed={filter === item} onClick={() => setFilter(item)}>{categoryLabels[item]}<span>{item === 'all' ? achievements.length : achievements.filter((entry) => entry.category === item).length}</span></button>)}</div>
-      <p className="result-count" aria-live="polite">Showing {filtered.length} {filtered.length === 1 ? 'record' : 'records'}</p>
-      <div className="record-list">{filtered.map((item, index) => {
+    <section className="section-pad records-section">
+      <div className="achievement-stats" aria-label="Achievement summary">{stats.map((stat) => <div className="achievement-stat" key={stat.label}><span className="achievement-stat-mark" aria-hidden="true">{stat.mark}</span><span className="achievement-stat-copy"><strong>{stat.value}</strong><span>{stat.label}</span></span></div>)}</div>
+      <div className="achievement-controls"><div className="filter-bar" role="group" aria-label="Filter achievements by category">{achievementFilters.map((item) => <button key={item} className={`filter-button ${filter === item ? 'selected' : ''}`} aria-pressed={filter === item} onClick={() => setFilter(item)}>{categoryLabels[item]}<span>{item === 'all' ? achievements.length : achievements.filter((entry) => entry.category === item).length}</span></button>)}</div><label className="achievement-search"><span aria-hidden="true">⌕</span><input aria-label="Search achievements" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search achievements…" type="search"/></label></div>
+      <div className="achievement-featured-heading"><SectionTitle kicker="SELECTED RECORDS">Featured achievements.</SectionTitle></div>
+      <div className="featured-achievements">{featured.map((item, index) => <button className="featured-achievement" key={`${item.title}-${item.year}-${index}`} type="button" aria-haspopup="dialog" onClick={(event) => openRecord(item, event.currentTarget)}><span className="featured-achievement-top"><span>{item.year}</span><span>{categoryLabels[item.category]}</span></span><span className="featured-achievement-title">{item.title}</span>{item.detail && <span className="featured-achievement-detail">{item.detail}</span>}<span className="featured-achievement-action">View details <span aria-hidden="true">↗</span></span></button>)}</div>
+      <div className="achievement-list-heading" id="all-achievements"><SectionTitle kicker="THE FULL RECORD">All achievements.</SectionTitle><p className="result-count" aria-live="polite">Showing {filtered.length} {filtered.length === 1 ? 'record' : 'records'}</p></div>
+      {filtered.length ? <div className="achievement-timeline">{[...grouped.entries()].map(([year, records]) => <section className="achievement-year-group" key={year}><h3 className="achievement-year-label">{year}</h3><div className="record-list">{records.map(({ item, index }) => {
         const key = `${item.category}-${item.title}-${item.year}-${index}`
         const hasCertificate = Boolean(item.certificates?.length)
-        const contents = <><span className="record-year">{item.year ?? '—'}</span><span className="record-copy"><span className="record-category">{categoryLabels[item.category]}</span><span className="record-title">{item.title}</span>{item.detail && <span className="record-detail">{item.detail}</span>}</span><span className={`record-mark ${hasCertificate ? 'has-certificate' : 'certificate-pending'}`} aria-hidden="true">{hasCertificate ? 'View certificate ↗' : 'Certificate pending'}</span></>
-        return <button className="record-row record-row-button" key={key} type="button" aria-haspopup="dialog" aria-label={hasCertificate ? `View certificate for ${item.title}${item.year ? `, ${item.year}` : ''}` : `View ${item.title}; certificate not supplied`} onClick={(event) => { certificateTrigger.current = event.currentTarget; setSelectedAchievement(item) }}>{contents}</button>
-      })}</div>
+        return <div className="achievement-timeline-entry" key={key}><span className="achievement-timeline-node" aria-hidden="true"/><button className="record-row record-row-button" type="button" aria-haspopup="dialog" aria-label={hasCertificate ? `View certificate for ${item.title}${item.year ? `, ${item.year}` : ''}` : `View ${item.title}; certificate not supplied`} onClick={(event) => openRecord(item, event.currentTarget)}><span className="record-copy"><span className="record-category">{categoryLabels[item.category]}</span><span className="record-title">{item.title}</span>{item.detail && <span className="record-tags">{item.detail.split(' · ').map((tag, tagIndex) => <span className="record-tag" key={`${tag}-${tagIndex}`}>{tag}</span>)}</span>}</span><span className={`record-mark ${hasCertificate ? 'has-certificate' : 'certificate-pending'}`} aria-hidden="true">{hasCertificate ? 'View certificate ↗' : 'Certificate pending'}</span><span className="record-row-arrow" aria-hidden="true">›</span></button></div>
+      })}</div></section>)}</div> : <p className="achievement-no-results">No achievements match this search and filter.</p>}
     </section>{selectedAchievement && <AchievementCertificateViewer achievement={selectedAchievement} onClose={() => setSelectedAchievement(null)} trigger={certificateTrigger}/>}</PageFrame>
 }
 
