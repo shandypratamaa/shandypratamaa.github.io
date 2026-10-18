@@ -261,3 +261,14 @@
 
 /* Keep the full portrait visible on phones without changing the desktop hero. */
 @media(max-width:600px){.hero-photo-frame{height:auto;aspect-ratio:3/4}.hero-photo-preview img{object-position:center center}}
+
+/* Force arrow controls to use the same text-style glyph on iOS as on desktop. */
+@media(max-width:600px){
+  .text-link span,.project-card-arrow,.empty-icon,.card-arrow,.project-image-zoom,.pet-card-zoom,.hero-photo-zoom,.lego-card-zoom,.lego-gallery-hint span{font-size:0}
+  .text-link span::after,.project-card-arrow::after,.empty-icon::after,.card-arrow::after,.project-image-zoom::after,.pet-card-zoom::after,.hero-photo-zoom::after,.lego-card-zoom::after,.lego-gallery-hint span::after{content:'↗︎';font-family:Arial,sans-serif;line-height:1}
+  .text-link span::after,.lego-gallery-hint span::after{font-size:14px}
+  .project-card-arrow::after{font-size:17px}
+  .empty-icon::after{font-size:26px}
+  .card-arrow::after{font-size:16px}
+  .project-image-zoom::after,.pet-card-zoom::after,.hero-photo-zoom::after,.lego-card-zoom::after{font-size:15px}
+}
