@@ -584,7 +584,7 @@ function BadmintonFeature() {
 }
 function Contact() {
   usePageMeta('Contact', 'Contact Shandy Putra.')
-  return <PageFrame><PageIntro number="11" eyebrow="CONTACT" title={<>Start a<br/><em>conversation.</em></>} description="For admissions, competition, school, or collaboration enquiries."/><section className="section-pad contact-body"><Eyebrow>CONTACT DETAILS</Eyebrow><EmptyState label="Contact details haven’t been added yet" detail="No email address or profile links were included in the supplied materials."/></section></PageFrame>
+  return <PageFrame><PageIntro number="11" eyebrow="CONTACT" title={<>Start a<br/><em>conversation.</em></>} description="For admissions, competition, school, or collaboration enquiries."/><section className="section-pad contact-body"><Eyebrow>FIND ME ONLINE</Eyebrow><div className="contact-cards"><a className="contact-card" href="https://www.instagram.com/s_pratama26/" target="_blank" rel="noreferrer" aria-label="Instagram profile @s_pratama26, opens in a new tab"><span className="contact-card-kicker">01 / SOCIAL</span><span className="contact-card-title">Instagram</span><span className="contact-card-detail">@s_pratama26</span><span className="contact-card-arrow" aria-hidden="true">↗</span></a><div className="contact-card contact-card-upcoming"><span className="contact-card-kicker">02 / NETWORK</span><span className="contact-card-title">LinkedIn</span><span className="contact-card-detail">Coming soon</span><span className="contact-card-status">SOON</span></div></div></section></PageFrame>
 }
 function Aviation() {
   usePageMeta('Aviation', 'A personal journal about the aircraft that have inspired Shandy Putra since childhood.')

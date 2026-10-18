@@ -264,11 +264,27 @@
 
 /* Force arrow controls to use the same text-style glyph on iOS as on desktop. */
 @media(max-width:600px){
-  .text-link span,.project-card-arrow,.empty-icon,.card-arrow,.project-image-zoom,.pet-card-zoom,.hero-photo-zoom,.lego-card-zoom,.lego-gallery-hint span{font-size:0}
-  .text-link span::after,.project-card-arrow::after,.empty-icon::after,.card-arrow::after,.project-image-zoom::after,.pet-card-zoom::after,.hero-photo-zoom::after,.lego-card-zoom::after,.lego-gallery-hint span::after{content:'↗︎';font-family:Arial,sans-serif;line-height:1}
+  .text-link span,.button span,.project-card-arrow,.empty-icon,.card-arrow,.project-image-zoom,.pet-card-zoom,.hero-photo-zoom,.lego-card-zoom,.lego-gallery-hint span,.contact-card-arrow{font-size:0}
+  .text-link span::after,.button span::after,.project-card-arrow::after,.empty-icon::after,.card-arrow::after,.project-image-zoom::after,.pet-card-zoom::after,.hero-photo-zoom::after,.lego-card-zoom::after,.lego-gallery-hint span::after,.contact-card-arrow::after{content:'↗︎';font-family:Arial,sans-serif;line-height:1}
   .text-link span::after,.lego-gallery-hint span::after{font-size:14px}
+  .button span::after{font-size:15px}
   .project-card-arrow::after{font-size:17px}
   .empty-icon::after{font-size:26px}
   .card-arrow::after{font-size:16px}
   .project-image-zoom::after,.pet-card-zoom::after,.hero-photo-zoom::after,.lego-card-zoom::after{font-size:15px}
+  .contact-card-arrow::after{font-size:17px}
+  .contact-cards{grid-template-columns:1fr}
+  .contact-card{min-height:155px;padding:20px}
+  .contact-card-title{font-size:28px}
 }
+
+.contact-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border-top:1px solid var(--line);border-left:1px solid var(--line)}
+.contact-card{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:12px;min-height:190px;padding:24px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);transition:background .25s var(--ease)}
+a.contact-card:hover,a.contact-card:focus-visible{background:var(--surface2)}
+.contact-card-kicker{color:var(--teal);font:9px var(--mono);letter-spacing:.13em}
+.contact-card-title{font:500 clamp(25px,3vw,36px)/1 var(--display);letter-spacing:-.045em}
+.contact-card-detail{color:var(--muted);font-size:13px}
+.contact-card-arrow{position:absolute;right:22px;bottom:20px;color:var(--teal);font-size:17px}
+.contact-card-status{position:absolute;right:22px;bottom:20px;color:var(--faint);font:9px var(--mono);letter-spacing:.1em}
+.contact-card-upcoming{color:#abb3ae}
+@media(max-width:600px){.contact-card-arrow{font-size:0}.contact-cards{grid-template-columns:1fr}.contact-card{min-height:155px;padding:20px}.contact-card-title{font-size:28px}}
