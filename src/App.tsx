@@ -520,7 +520,7 @@ function Home() {
     </section>
 
     <section className="section-pad interest-section" id="interests">
-      <SectionTitle kicker="05 / OUTSIDE THE PAGE">Interests, in their own words.</SectionTitle>
+      <SectionTitle kicker="05 / OUTSIDE THE PAGE">What Makes Me, Me.</SectionTitle>
       <div className="interest-grid">{interests.map((item) => <Link to={item.path} className={`interest-card ${item.title === 'Pets' ? 'interest-card-pets' : ''}`} key={item.path}><span className="card-number">{item.index} /</span><h3>{item.title}</h3><p>{item.note}</p><span className="card-arrow" aria-hidden="true">↗</span></Link>)}</div>
     </section>
     <ContactCallout/>
