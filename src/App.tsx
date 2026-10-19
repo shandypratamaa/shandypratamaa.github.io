@@ -612,57 +612,33 @@ const aboutPassage = [
   <>Looking ahead, I want to explore the possibilities of AI and engineering by building useful projects, conducting research, and solving real-world problems. <strong>I’m driven by curiosity, motivated by challenges, and determined to turn every experience, including failure, into an opportunity to grow.</strong></>,
 ]
 
-function aboutNodeText(node: React.ReactNode): string {
-  if (typeof node === 'string' || typeof node === 'number') return String(node)
-  if (Array.isArray(node)) return node.map(aboutNodeText).join('')
-  if (React.isValidElement<{ children?: React.ReactNode }>(node)) return aboutNodeText(node.props.children)
-  return ''
-}
-
-function revealAboutText(node: React.ReactNode, remaining: { value: number }): React.ReactNode {
-  if (typeof node === 'string' || typeof node === 'number') {
-    const visible = String(node).slice(0, Math.max(0, remaining.value))
-    remaining.value -= visible.length
-    return visible
-  }
-  if (Array.isArray(node)) return node.map((child) => revealAboutText(child, remaining))
-  if (React.isValidElement<{ children?: React.ReactNode }>(node)) {
-    return React.cloneElement(node, { children: revealAboutText(node.props.children, remaining) })
-  }
-  return null
-}
-
-const aboutPassageLength = aboutPassage.reduce((total, paragraph) => total + aboutNodeText(paragraph).length, 0)
-const aboutPassageSessionKey = 'shandy-about-passage-typed'
-
 function AboutEssay() {
-  const hasTypedBefore = () => {
-    try { return window.sessionStorage.getItem(aboutPassageSessionKey) === 'true' } catch { return false }
-  }
-  const [visibleCharacters, setVisibleCharacters] = useState(() => hasTypedBefore() ? aboutPassageLength : 0)
-
+  const essayRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    if (visibleCharacters >= aboutPassageLength) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setVisibleCharacters(aboutPassageLength)
-      try { window.sessionStorage.setItem(aboutPassageSessionKey, 'true') } catch { /* Storage may be disabled. */ }
+    const essay = essayRef.current
+    if (!essay) return
+    const paragraphs = Array.from(essay.querySelectorAll('p'))
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (prefersReducedMotion || typeof IntersectionObserver === 'undefined') {
+      paragraphs.forEach((paragraph) => paragraph.classList.add('is-visible'))
       return
     }
 
-    let count = 0
-    const timer = window.setInterval(() => {
-      count = Math.min(count + 4, aboutPassageLength)
-      setVisibleCharacters(count)
-      if (count >= aboutPassageLength) {
-        window.clearInterval(timer)
-        try { window.sessionStorage.setItem(aboutPassageSessionKey, 'true') } catch { /* Storage may be disabled. */ }
-      }
-    }, 16)
-    return () => window.clearInterval(timer)
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return
+      paragraphs.forEach((paragraph, index) => {
+        paragraph.style.setProperty('--about-reveal-delay', `${index * 560}ms`)
+        paragraph.classList.add('is-visible')
+      })
+      // Start one staggered sequence and never replay it when scrolling back.
+      observer.disconnect()
+    }, { threshold: 0.1, rootMargin: '0px 0px -8% 0px' })
+    essay.classList.add('reveal-ready')
+    observer.observe(essay)
+    return () => observer.disconnect()
   }, [])
 
-  let remaining = { value: visibleCharacters }
-  return <div className="about-essay-copy" aria-live="off">{aboutPassage.map((paragraph, index) => <p key={index}>{revealAboutText(paragraph, remaining)}</p>)}</div>
+  return <div className="about-essay-copy" ref={essayRef}>{aboutPassage.map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
 }
 
 function About() {

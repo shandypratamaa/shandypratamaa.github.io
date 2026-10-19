@@ -19,6 +19,10 @@
 .about-essay-copy p{margin:0 0 20px;color:#b8c1bc;font-size:14px;line-height:1.85}
 .about-essay-copy p:last-child{margin-bottom:0}
 .about-essay-copy strong{color:var(--teal);font-weight:600}
+.about-essay-copy.reveal-ready p{opacity:.35;filter:blur(4px);transform:translateY(8px)}
+.about-essay-copy.reveal-ready p.is-visible{animation:about-blur-clear 620ms ease-out var(--about-reveal-delay,0ms) both}
+@keyframes about-blur-clear{from{opacity:.45;filter:blur(6px);transform:translateY(8px)}to{opacity:1;filter:blur(0);transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.about-essay-copy.reveal-ready p{opacity:1;filter:none;transform:none}.about-essay-copy p.is-visible{animation:none}}
 .travel-intro{display:grid;grid-template-columns:.7fr 1fr;gap:8vw;align-items:start;margin-bottom:38px}
 .travel-intro .eyebrow{margin:3px 0 0}
 .travel-intro>p{max-width:530px;margin:0;color:var(--muted);font-size:15px;line-height:1.7}
