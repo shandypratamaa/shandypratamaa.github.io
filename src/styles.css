@@ -312,8 +312,8 @@ a.contact-card:hover,a.contact-card:focus-visible{background:var(--surface2)}
 .cv-preview-actions{display:flex;align-items:center;gap:12px;flex-shrink:0}
 .cv-preview-close{width:40px;height:40px;border:1px solid var(--line);background:transparent;color:var(--text);font:26px/1 Arial,sans-serif;cursor:pointer;transition:background .2s,color .2s}
 .cv-preview-close:hover{background:var(--teal);color:#07100f}
-.cv-preview-page{flex:1;min-height:0;overflow:auto;display:flex;justify-content:center;padding:22px;background:#1a2020}
-.cv-preview-page img{display:block;width:min(100%,680px);height:max-content;object-fit:contain;align-self:flex-start;background:#fff;box-shadow:0 12px 42px rgba(0,0,0,.35)}
+.cv-preview-page{flex:1;min-height:0;overflow:auto;display:flex;justify-content:center;padding:12px;background:#1a2020}
+.cv-preview-page img{display:block;width:min(100%,760px);height:max-content;object-fit:contain;align-self:flex-start;background:#fff;box-shadow:0 12px 42px rgba(0,0,0,.35)}
 @media(max-width:600px){.hero-actions{gap:9px;margin-top:25px}.hero-actions .button{min-width:0;min-height:44px;padding:0 13px;gap:18px;font-size:11px}.cv-preview-backdrop{padding:8px}.cv-preview-dialog{height:94svh}.cv-preview-header{align-items:flex-start;padding:15px 13px;gap:10px}.cv-preview-header h2{font-size:18px}.cv-preview-header .eyebrow{font-size:8px}.cv-preview-actions{gap:7px}.cv-preview-actions .button{min-height:38px;padding:0 10px;gap:8px;font-size:10px}.cv-preview-close{width:36px;height:36px;flex-basis:36px}}
 
 /* Achievements page: compact summary, featured records, and a year timeline. */
