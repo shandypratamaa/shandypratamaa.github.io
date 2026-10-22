@@ -300,6 +300,21 @@ a.contact-card:hover,a.contact-card:focus-visible{background:var(--surface2)}
 .contact-card-status{position:absolute;right:22px;bottom:20px;color:var(--faint);font:9px var(--mono);letter-spacing:.1em}
 .contact-card-upcoming{color:#abb3ae}
 @media(max-width:600px){.contact-card-arrow{font-size:0}.contact-cards{grid-template-columns:1fr}.contact-card{min-height:155px;padding:20px}.contact-card-title{font-size:28px}}
+.hero-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:30px}
+.hero-actions .button{min-width:132px}
+.hero-actions button.button-outline{appearance:none;background:transparent;color:var(--text);font-family:inherit;cursor:pointer}
+.hero-actions button.button-outline:hover{background:var(--text);color:var(--bg)}
+.cv-preview-backdrop{position:fixed;inset:0;z-index:130;display:grid;place-items:center;padding:clamp(10px,3vw,34px);background:rgba(3,7,7,.86);backdrop-filter:blur(8px)}
+.cv-preview-dialog{display:flex;flex-direction:column;width:min(1060px,100%);height:min(900px,90svh);min-height:0;overflow:hidden;border:1px solid #35433f;background:#0d1212;box-shadow:0 30px 100px rgba(0,0,0,.5);animation:project-modal-in .28s var(--ease) both}
+.cv-preview-header{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:18px 22px;border-bottom:1px solid var(--line)}
+.cv-preview-header .eyebrow{margin:0 0 7px}
+.cv-preview-header h2{margin:0;font:500 clamp(19px,3vw,26px)/1.15 var(--display);letter-spacing:-.04em}
+.cv-preview-actions{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.cv-preview-close{width:40px;height:40px;border:1px solid var(--line);background:transparent;color:var(--text);font:26px/1 Arial,sans-serif;cursor:pointer;transition:background .2s,color .2s}
+.cv-preview-close:hover{background:var(--teal);color:#07100f}
+.cv-preview-page{flex:1;min-height:0;overflow:auto;display:flex;justify-content:center;padding:22px;background:#1a2020}
+.cv-preview-page img{display:block;width:min(100%,680px);height:max-content;object-fit:contain;align-self:flex-start;background:#fff;box-shadow:0 12px 42px rgba(0,0,0,.35)}
+@media(max-width:600px){.hero-actions{gap:9px;margin-top:25px}.hero-actions .button{min-width:0;min-height:44px;padding:0 13px;gap:18px;font-size:11px}.cv-preview-backdrop{padding:8px}.cv-preview-dialog{height:94svh}.cv-preview-header{align-items:flex-start;padding:15px 13px;gap:10px}.cv-preview-header h2{font-size:18px}.cv-preview-header .eyebrow{font-size:8px}.cv-preview-actions{gap:7px}.cv-preview-actions .button{min-height:38px;padding:0 10px;gap:8px;font-size:10px}.cv-preview-close{width:36px;height:36px;flex-basis:36px}}
 
 /* Achievements page: compact summary, featured records, and a year timeline. */
 .achievement-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:34px}

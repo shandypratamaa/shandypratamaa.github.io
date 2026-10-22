@@ -390,6 +390,44 @@ function HeroPhotoPreview() {
   </>
 }
 
+function CvPreview() {
+  const [open, setOpen] = useState(false)
+  const { closing, dismiss } = useAnimatedDismiss()
+  const closeButton = useRef<HTMLButtonElement>(null)
+  const downloadButton = useRef<HTMLAnchorElement>(null)
+  const triggerButton = useRef<HTMLButtonElement>(null)
+  const cvPath = '/cv/Shandy_Putra_CV.pdf'
+
+  useEffect(() => {
+    if (!open) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    closeButton.current?.focus()
+    return () => {
+      document.body.style.overflow = previousOverflow
+      triggerButton.current?.focus()
+    }
+  }, [open])
+
+  return <>
+    <button ref={triggerButton} className="button button-outline" type="button" aria-haspopup="dialog" onClick={() => setOpen(true)}>View CV <span aria-hidden="true">↗</span></button>
+    {open && createPortal(<div className={`cv-preview-backdrop ${closing ? 'is-closing' : ''}`} onClick={(event) => { if (event.target === event.currentTarget) dismiss(() => setOpen(false)) }} onKeyDown={(event) => {
+      if (event.key === 'Escape') { event.preventDefault(); dismiss(() => setOpen(false)); return }
+      if (event.key === 'Tab') {
+        const first = downloadButton.current
+        const last = closeButton.current
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus() }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus() }
+      }
+    }}>
+      <section className="cv-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="cv-preview-title">
+        <header className="cv-preview-header"><div><Eyebrow>CURRICULUM VITAE</Eyebrow><h2 id="cv-preview-title">Shandy Putra — CV</h2></div><div className="cv-preview-actions"><a ref={downloadButton} className="button button-primary" href={cvPath} download="Shandy_Putra_CV.pdf">Download CV <span aria-hidden="true">↓</span></a><button ref={closeButton} className="cv-preview-close" type="button" onClick={() => dismiss(() => setOpen(false))} aria-label="Close CV preview">×</button></div></header>
+        <div className="cv-preview-page"><img src="/cv/Shandy_Putra_CV_preview.png" alt="One-page preview of Shandy Putra's CV" /></div>
+      </section>
+    </div>, document.body)}
+  </>
+}
+
 function ProjectShowcase() {
   const [selectedProject, setSelectedProject] = useState<typeof projects[number] | null>(null)
   const [selectedImage, setSelectedImage] = useState<ProjectImage | null>(null)
@@ -490,7 +528,7 @@ function Home() {
 
   return <PageFrame>
     <section className="hero" id="top">
-      <div className="hero-copy"><Eyebrow>PORTFOLIO · 2026</Eyebrow><h1>Shandy<br/><span>Putra</span><sup>01</sup></h1><p className="hero-subtitle" aria-label={tagline}><span className="hero-subtitle-measure" aria-hidden="true">{tagline}</span><span className="hero-subtitle-typed" aria-hidden="true">{typedTagline}</span></p></div>
+      <div className="hero-copy"><Eyebrow>PORTFOLIO · 2026</Eyebrow><h1>Shandy<br/><span>Putra</span><sup>01</sup></h1><p className="hero-subtitle" aria-label={tagline}><span className="hero-subtitle-measure" aria-hidden="true">{tagline}</span><span className="hero-subtitle-typed" aria-hidden="true">{typedTagline}</span></p><div className="hero-actions"><Link className="button button-primary" to="/#contact">Contact Me <span aria-hidden="true">↗</span></Link><CvPreview/></div></div>
       <div className="hero-photo-frame"><HeroPhotoPreview/></div>
       <div className="hero-meta"><span>SHANDY PUTRA</span><span>01 — 11 / PORTFOLIO</span></div>
     </section>
