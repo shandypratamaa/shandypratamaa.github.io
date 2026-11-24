@@ -3,20 +3,22 @@ import { createPortal } from 'react-dom'
 import { BrowserRouter, Link, Route, Routes, useLocation, useNavigate, useNavigationType } from 'react-router-dom'
 import { achievements, categoryLabels, type Achievement, type AchievementCategory } from './content/achievements'
 
+// Homepage section order. Research returns to the nav once it has published content.
 const nav = [
-  ['About', 'about'], ['Achievements', 'achievements'], ['Projects', 'projects'],
-  ['Research', 'research'], ['Interests', 'interests'], ['Contact', 'contact'],
+  ['About', 'about'], ['Projects', 'projects'], ['Achievements', 'achievements'],
+  ['Interests', 'interests'], ['Contact', 'contact'],
 ] as const
+const contactEmail = ['shandyitsme26', 'gmail.com'].join(String.fromCharCode(64))
 type NavigationHistory = { goBack: (fallback: string) => void }
 const NavigationHistoryContext = createContext<NavigationHistory>({ goBack: () => {} })
+// Technology is left out of the grid until its page has content; its route still works.
 const interests = [
-  { title: 'Automotive', path: '/automotive', index: '01', note: 'An interest in automotive.' },
-  { title: 'Aviation', path: '/aviation', index: '02', note: 'An interest in aviation.' },
-  { title: 'Badminton', path: '/badminton', index: '03', note: 'Playing and verified results.' },
-  { title: 'Technology', path: '/technology', index: '04', note: 'A subject of interest.' },
-  { title: 'Travel', path: '/travel', index: '05', note: 'Five destinations, more to come.' },
-  { title: 'LEGO Collection', path: '/lego', index: '06', note: 'A collection of builds and favorite sets.' },
-  { title: 'Pets', path: '/pets', index: '07', note: 'Meet the cats and Patou.' },
+  { title: 'Aviation', path: '/aviation', index: '01', note: 'The airliners and fighters I have admired since childhood.' },
+  { title: 'Automotive', path: '/automotive', index: '02', note: 'Liberty Walk, Pandem, and meeting Kei Miura at IMX 2026.' },
+  { title: 'Badminton', path: '/badminton', index: '03', note: 'From a 21–0 first loss to podium finishes.' },
+  { title: 'Travel', path: '/travel', index: '04', note: 'Bali to Barcelona, one stop at a time.' },
+  { title: 'LEGO Collection', path: '/lego', index: '05', note: 'Four Technic supercars, from 834 to 3,778 pieces.' },
+  { title: 'Pets', path: '/pets', index: '06', note: 'Eight cats and Patou the dog.' },
 ]
 type Pet = { name: string; kind: 'Cat' | 'Dog'; src?: string; alt: string; description?: string }
 const pets: Pet[] = [
@@ -82,10 +84,10 @@ const badmintonPhotos: InterestPhoto[] = [
   { src: '/images/interests/badminton-trophies.webp', title: 'Trophy collection', description: 'One moment from a series of tournaments. I kept competing and added more results afterward.', alt: 'Badminton trophies from a school competition.' },
 ]
 type ProjectImage = { src?: string; alt?: string; label: string; className?: string }
-type ProjectItem = { id: string; name: string; icon: string; summary: string; description: string[]; images: ProjectImage[] }
+type ProjectItem = { id: string; name: string; platform: string; stack: string[]; summary: string; description: string[]; images: ProjectImage[] }
 const projects: ProjectItem[] = [
   {
-    id: 'spendly', name: 'Spendly', icon: '👛',
+    id: 'spendly', name: 'Spendly', platform: 'iOS & macOS app', stack: ['Swift', 'SwiftUI', 'Mac Catalyst', 'WidgetKit'],
     summary: 'A personal finance and savings management app built with Swift and SwiftUI.',
     description: [
       'Spendly is a personal finance and savings management application built using Swift, SwiftUI, and Mac Catalyst. Designed for personal use, it helps users track their money, manage expenses, set budgets, and stay motivated to save without connecting to real bank accounts.',
@@ -102,7 +104,7 @@ const projects: ProjectItem[] = [
     ],
   },
   {
-    id: 'scorly', name: 'Scorly', icon: '📈',
+    id: 'scorly', name: 'Scorly', platform: 'Web platform', stack: ['React', 'TypeScript', 'Supabase', 'Tailwind CSS'],
     summary: 'An SAT practice tracker for recording questions, reviewing mistakes, and measuring progress.',
     description: [
       'Scorly is an SAT practice tracking platform designed to help students record questions, analyze performance, review mistakes, and monitor improvement over time. It organizes individual SAT questions by topic, subtopic, difficulty, time spent, and answer accuracy, allowing students to identify weaknesses and focus their revision effectively. The platform also connects students directly with their parents or guardians, allowing them to view real-time progress dashboards, analyze strengths and weaknesses, and stay actively involved in the preparation journey.',
@@ -177,11 +179,14 @@ function ScrollReveals() {
 
     document.documentElement.classList.add('has-scroll-reveal')
     const sections = document.querySelectorAll<HTMLElement>('main > section, main > section .travel-stop, main > section .record-row, main > section .interest-card, main > section .highlight-row, main > section .photo-card, main > section .pet-card')
+    // Reveal once and stay visible, so content never fades out while someone is reading or scrolling back.
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
-        entry.target.classList.toggle('is-visible', entry.isIntersecting)
+        if (!entry.isIntersecting) return
+        entry.target.classList.add('is-visible')
+        observer.unobserve(entry.target)
       })
-    }, { threshold: 0.08, rootMargin: '-4% 0px -8% 0px' })
+    }, { threshold: 0.05, rootMargin: '0px 0px -6% 0px' })
 
     sections.forEach((section) => {
       section.classList.add('scroll-reveal')
@@ -190,32 +195,6 @@ function ScrollReveals() {
     })
     return () => observer.disconnect()
   }, [pathname])
-  return null
-}
-
-let handledRefreshTimeOrigin: number | null = null
-
-function RefreshHomeRedirect() {
-  const { pathname, hash } = useLocation()
-  const navigate = useNavigate()
-  useEffect(() => {
-    if (pathname === '/' && !hash) return
-    const [navigation] = performance.getEntriesByType('navigation') as PerformanceNavigationTiming[]
-    if (navigation?.type !== 'reload' || handledRefreshTimeOrigin === performance.timeOrigin) return
-
-    const marker = 'portfolio-refresh-home-time-origin'
-    try {
-      if (sessionStorage.getItem(marker) === String(performance.timeOrigin)) return
-      sessionStorage.setItem(marker, String(performance.timeOrigin))
-    } catch {
-      // Storage can be disabled; the in-memory guard still prevents duplicate redirects.
-    }
-    handledRefreshTimeOrigin = performance.timeOrigin
-    navigate('/', { replace: true })
-  // Refresh navigation metadata remains "reload" for the whole SPA session. Check
-  // it only on the initial mount so later in-app links are never redirected home.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
   return null
 }
 
@@ -233,7 +212,7 @@ function Header() {
     return () => document.removeEventListener('keydown', closeOnEscape)
   }, [open])
   return <header className="site-header">
-    <Link className="wordmark" to="/" aria-label="Shandy Putra, home"><span>SP</span><span className="wordmark-name">SHANDY PUTRA PRATAMA</span></Link>
+    <Link className="wordmark" to="/" aria-label="Shandy Putra, home"><span>sp</span><span className="wordmark-name">Shandy Putra Pratama</span></Link>
     <button className="menu-toggle" ref={trigger} aria-expanded={open} aria-controls="main-navigation" onClick={() => setOpen(!open)}>
       <span>{open ? 'Close' : 'Menu'}</span><i aria-hidden="true">{open ? '−' : '+'}</i>
     </button>
@@ -252,7 +231,18 @@ function Header() {
   </header>
 }
 
-function Footer() { return <footer className="site-footer"><Link to="/" className="footer-mark">SP</Link><span>Shandy Putra (2026)</span><a href="#top" className="back-top">Back to top ↑</a></footer> }
+function Footer() {
+  return <footer className="site-footer">
+    <Link to="/" className="footer-mark" aria-label="Shandy Putra, home">sp</Link>
+    <span>© {new Date().getFullYear()} Shandy Putra · Indonesia</span>
+    <nav className="footer-links" aria-label="Elsewhere">
+      <a href={`mailto:${contactEmail}`}>Email</a>
+      <a href="https://github.com/shandypratamaa" target="_blank" rel="noreferrer">GitHub</a>
+      <a href="https://www.instagram.com/s_pratama26/" target="_blank" rel="noreferrer">Instagram</a>
+    </nav>
+    <button type="button" className="back-top" onClick={() => window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })}>Back to top ↑</button>
+  </footer>
+}
 function PageFrame({ children }: { children: React.ReactNode }) { return <><Header/><main id="main-content" tabIndex={-1}>{children}</main><Footer/></> }
 function useAnimatedDismiss() {
   const [closing, setClosing] = useState(false)
@@ -471,14 +461,22 @@ function ProjectShowcase() {
   }
 
   return <>
-    <div className="project-grid">{projects.map((project) => <button className="project-card" key={project.id} onClick={(event) => openProject(project, event)} aria-haspopup="dialog">
-      <span className="project-card-icon" aria-hidden="true">{project.icon}</span>
-      <span className="project-card-content"><span className="project-card-kicker">PROJECT / {project.id.toUpperCase()}</span><span className="project-card-title">{project.name}</span><span className="project-card-summary">{project.summary}</span></span>
-      <span className="project-card-arrow" aria-hidden="true">↗</span>
-    </button>)}</div>
+    <div className="project-grid">{projects.map((project) => {
+      const cover = project.images.find((image) => image.src)
+      return <button className="project-card" key={project.id} onClick={(event) => openProject(project, event)} aria-haspopup="dialog">
+        {cover && <span className={`project-card-media ${cover.className ?? ''}`}><img src={cover.src} alt="" loading="lazy" decoding="async"/></span>}
+        <span className="project-card-content">
+          <span className="project-card-kicker">{project.platform}</span>
+          <span className="project-card-title">{project.name}</span>
+          <span className="project-card-summary">{project.summary}</span>
+          <span className="project-stack" aria-label="Built with">{project.stack.map((tool) => <span key={tool}>{tool}</span>)}</span>
+          <span className="project-card-cta">View project <span aria-hidden="true">↗</span></span>
+        </span>
+      </button>
+    })}</div>
     {selectedProject && createPortal(<div className={`project-modal-backdrop ${projectDismiss.closing ? 'is-closing' : ''}`} onClick={(event) => { if (event.target === event.currentTarget) projectDismiss.dismiss(() => setSelectedProject(null)) }} onKeyDown={(event) => { if (event.key === 'Escape') projectDismiss.dismiss(() => setSelectedProject(null)) }}>
       <section className="project-modal" role="dialog" aria-modal="true" aria-labelledby="project-modal-title" aria-describedby="project-modal-summary">
-        <div className="project-modal-heading"><div><p className="eyebrow"><span className="eyebrow-line"/>PROJECT / {selectedProject.id.toUpperCase()}</p><h2 id="project-modal-title"><span aria-hidden="true">{selectedProject.icon}</span> {selectedProject.name}</h2><p id="project-modal-summary" className="project-modal-summary">{selectedProject.summary}</p></div><button ref={closeButton} className="project-modal-close" onClick={() => projectDismiss.dismiss(() => setSelectedProject(null))} aria-label="Close project details">×</button></div>
+        <div className="project-modal-heading"><div><p className="eyebrow"><span className="eyebrow-line"/>{selectedProject.platform}</p><h2 id="project-modal-title">{selectedProject.name}</h2><p id="project-modal-summary" className="project-modal-summary">{selectedProject.summary}</p><span className="project-stack" aria-label="Built with">{selectedProject.stack.map((tool) => <span key={tool}>{tool}</span>)}</span></div><button ref={closeButton} className="project-modal-close" onClick={() => projectDismiss.dismiss(() => setSelectedProject(null))} aria-label="Close project details">×</button></div>
         <div className="project-modal-description">{selectedProject.description.map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
         <div className="project-modal-gallery"><div className="project-gallery-heading"><div><p className="eyebrow"><span className="eyebrow-line"/>GALLERY</p><h3>Inside {selectedProject.name}.</h3></div><span>{selectedProject.images.length ? `${selectedProject.images.filter((image) => image.src).length} screenshots` : 'Screenshots to come'}</span></div><div className="project-image-slots" aria-label={`${selectedProject.name} screenshots`}>{selectedProject.images.length ? selectedProject.images.map((image, index) => image.src && image.alt ? <figure className={`project-image-card ${image.className ?? ''}`} key={image.src}><button className="project-image-preview-trigger" type="button" aria-haspopup="dialog" aria-label={`Preview ${image.label}`} onClick={(event) => openImagePreview(image, event)}><img className={image.className} src={image.src} alt={image.alt} loading="lazy" decoding="async"/><span className="project-image-zoom" aria-hidden="true">↗</span></button><figcaption>{image.label}</figcaption></figure> : <div className="project-image-pending" key={`pending-${index}`}><span aria-hidden="true">＋</span><span>{image.label}</span></div>) : <><div className="project-image-slot"><span aria-hidden="true">＋</span><span>App screenshot</span></div><div className="project-image-slot"><span aria-hidden="true">＋</span><span>Feature preview</span></div><div className="project-image-slot"><span aria-hidden="true">＋</span><span>More images</span></div></>}</div></div>
       </section>
@@ -493,79 +491,76 @@ function ProjectShowcase() {
   </>
 }
 
+// Records shown on the homepage, picked by title so the list stays curated as achievements.ts grows.
+const homeHighlightTitles = [
+  'Grand Final STEM Olympiad — Silver Medal',
+  'Copernicus Olympiad — Absolute Winner Top #1 (Gold Medal)',
+  'IRPrO — Gold Medal',
+  'STEM Olympiad Final International Round — Gold Medal',
+]
+const isTopResult = (item: Achievement) => /Gold|Absolute Winner|Perfect Score|First Place|1st Place/.test(item.title)
+const inPersonCountries = new Set(achievements.flatMap((item) => item.detail?.includes('Offline') ? [item.detail.split(', ').pop() ?? ''] : []).filter(Boolean))
+
 function Home() {
-  usePageMeta('Portfolio', 'Selected achievements, interests, and work from Shandy Putra.')
-  const selected = achievements.filter((item) => ['international', 'olympiad', 'research'].includes(item.category)).slice(0, 3)
-  const tagline = 'Curious by Nature. Driven to Discover.'
-  const [typedTagline, setTypedTagline] = useState('')
-
-  useEffect(() => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      setTypedTagline(tagline)
-      return
-    }
-
-    let character = 0
-    let timer = 0
-    const typeNextCharacter = () => {
-      character += 1
-      setTypedTagline(tagline.slice(0, character))
-      if (character < tagline.length) {
-        timer = window.setTimeout(typeNextCharacter, 55)
-        return
-      }
-
-      timer = window.setTimeout(() => {
-        character = 0
-        setTypedTagline('')
-        timer = window.setTimeout(typeNextCharacter, 160)
-      }, 3000 + Math.random() * 2000)
-    }
-
-    timer = window.setTimeout(typeNextCharacter, 55)
-    return () => window.clearTimeout(timer)
-  }, [])
+  usePageMeta('Portfolio', 'Shandy Putra — Grade 12 student in Indonesia building software and competing in international STEM olympiads.')
+  const highlights = homeHighlightTitles.flatMap((title) => achievements.find((item) => item.title === title) ?? [])
+  const stats = [
+    { value: achievements.filter(isTopResult).length, label: 'Gold & first-place results' },
+    { value: achievements.length, label: 'Recorded achievements' },
+    { value: inPersonCountries.size, label: 'Countries competed in, in person' },
+    { value: projects.length, label: 'Apps in active development' },
+  ]
 
   return <PageFrame>
     <section className="hero" id="top">
-      <div className="hero-copy"><Eyebrow>PORTFOLIO · 2026</Eyebrow><h1>Shandy<br/><span>Putra</span><sup>01</sup></h1><p className="hero-subtitle" aria-label={tagline}><span className="hero-subtitle-measure" aria-hidden="true">{tagline}</span><span className="hero-subtitle-typed" aria-hidden="true">{typedTagline}</span></p><div className="hero-actions"><Link className="button button-primary" to="/#contact">Contact Me <span aria-hidden="true">↗</span></Link><CvPreview/></div></div>
-      <div className="hero-photo-frame"><HeroPhotoPreview/></div>
-      <div className="hero-meta"><span>SHANDY PUTRA</span><span>01 — 11 / PORTFOLIO</span></div>
+      <div className="hero-copy">
+        <Eyebrow>Grade 12 · Kharisma Bangsa School · Indonesia</Eyebrow>
+        <h1>Shandy <em>Putra</em></h1>
+        <p className="hero-lead">I build software, compete in international STEM olympiads, and want to put <strong>AI and engineering</strong> to work on real problems.</p>
+        <p className="hero-tagline">Curious by nature. Driven to discover.</p>
+        <div className="hero-actions"><CvPreview/><Link className="button button-outline" to="/#contact">Get in touch <span aria-hidden="true">↗</span></Link></div>
+        <p className="hero-status"><span aria-hidden="true"/>Currently building <Link to="/#projects">Spendly</Link> and <Link to="/#projects">Scorly</Link></p>
+      </div>
+      <div className="hero-photo-frame"><HeroPhotoPreview/><span className="hero-photo-caption" aria-hidden="true">Robotics Research Centre</span></div>
+    </section>
+
+    <section className="proof-strip" aria-label="At a glance">
+      <dl>{stats.map((stat) => <div key={stat.label}><dt>{stat.label}</dt><dd>{stat.value}</dd></div>)}</dl>
     </section>
 
     <section className="intro section-pad" id="about">
-      <Eyebrow>01 / ABOUT ME</Eyebrow><div className="intro-copy"><h2>About<br/><em>me.</em></h2><div className="about-preview"><div className="about-preview-copy">
+      <div className="intro-copy"><div><Eyebrow>About</Eyebrow><h2>Curiosity that<br/><em>started with LEGO.</em></h2></div><div className="about-preview"><div className="about-preview-copy">
         <p>My name is <strong>Shandy Putra</strong>, and I’m a Grade 12 student at Kharisma Bangsa School in <strong>Indonesia</strong>. My curiosity about the world began in childhood, when I enjoyed building with LEGO and exploring how things worked. I was fascinated by airplanes, particularly the <strong>Boeing 777 and Airbus A350</strong>, as well as everyday technology such as computers, smartphones, and air conditioners. What started as childhood curiosity gradually developed into a deeper interest in science, engineering, and technology.</p>
         <p>Today, I’m particularly interested in <strong>artificial intelligence, computer science, and software development.</strong> I enjoy mathematics, physics, and biology, especially when I can apply what I learn through practical projects, experimentation, and research. Participating in national and international competitions has allowed me to challenge myself, explore unfamiliar problems, and earn recognition for my work.</p>
-      </div><Link className="text-link about-preview-cta" to="/about">Click to read more <span>↗</span></Link></div></div>
+      </div><Link className="text-link about-preview-cta" to="/about">Read my full story <span>↗</span></Link></div></div>
     </section>
 
     <section className="section-pad work-section" id="projects">
-      <SectionTitle kicker="02 / SELECTED WORK">Projects.</SectionTitle>
+      <SectionTitle kicker="Selected work" aside={<Link className="text-link" to="/projects">All projects <span>↗</span></Link>}>Things I’m <em>building.</em></SectionTitle>
       <ProjectShowcase/>
-      <Link className="text-link work-detail-link" to="/projects">Open the projects page <span>↗</span></Link>
-    </section>
-
-    <section className="section-pad work-section" id="research">
-      <SectionTitle kicker="03 / SELECTED WORK">Research.</SectionTitle>
-      <EmptyState label="Research details pending" detail="This space is reserved for verified research details."/>
-      <Link className="text-link work-detail-link" to="/research">Open the research page <span>↗</span></Link>
     </section>
 
     <section className="section-pad achievements-preview" id="achievements">
-      <SectionTitle kicker="04 / SELECTED ACHIEVEMENTS" aside={<Link className="text-link" to="/achievements">View all achievements <span>↗</span></Link>}>Selected moments.</SectionTitle>
-      <div className="highlight-list">{selected.map((item, index) => <article className="highlight-row" key={`${item.title}-${index}`}><span className="row-number">0{index + 1}</span><div><h3>{item.title}</h3>{item.detail && <p>{item.detail}</p>}</div><span className="row-year">{item.year}</span></article>)}</div>
+      <SectionTitle kicker="Track record" aside={<Link className="text-link" to="/achievements">All {achievements.length} achievements <span>↗</span></Link>}>Results that <em>travelled.</em></SectionTitle>
+      <div className="highlight-list">{highlights.map((item, index) => <article className="highlight-row" key={`${item.title}-${index}`}><span className="row-number">0{index + 1}</span><div><h3>{item.title}</h3>{item.detail && <p>{item.detail}</p>}</div><span className="row-year">{item.year}</span></article>)}</div>
     </section>
 
     <section className="section-pad interest-section" id="interests">
-      <SectionTitle kicker="05 / OUTSIDE THE PAGE">What Makes Me, Me.</SectionTitle>
-      <div className="interest-grid">{interests.map((item) => <Link to={item.path} className={`interest-card ${item.title === 'Pets' ? 'interest-card-pets' : ''}`} key={item.path}><span className="card-number">{item.index} /</span><h3>{item.title}</h3><p>{item.note}</p><span className="card-arrow" aria-hidden="true">↗</span></Link>)}</div>
+      <SectionTitle kicker="Outside the classroom">What makes <em>me, me.</em></SectionTitle>
+      <div className="interest-grid">{interests.map((item) => <Link to={item.path} className="interest-card" key={item.path}><span className="card-number">{item.index}</span><h3>{item.title}</h3><p>{item.note}</p><span className="card-arrow" aria-hidden="true">↗</span></Link>)}</div>
     </section>
     <ContactCallout/>
   </PageFrame>
 }
 
-function ContactCallout() { return <section className="contact-callout" id="contact"><Eyebrow>06 / KEEP IN TOUCH</Eyebrow><h2>Have something<br/><em>in mind?</em></h2><Link className="button button-outline" to="/contact">Get in touch <span>↗</span></Link></section> }
+function ContactCallout() {
+  return <section className="contact-callout" id="contact">
+    <Eyebrow>Contact</Eyebrow>
+    <h2>Let’s talk<br/><em>about it.</em></h2>
+    <p className="contact-callout-copy">Questions about a project, a competition, or my CV? My inbox is open.</p>
+    <div className="contact-callout-actions"><a className="button button-primary" href={`mailto:${contactEmail}`}>Email me <span aria-hidden="true">↗</span></a><Link className="button button-outline" to="/contact">All contact options <span aria-hidden="true">↗</span></Link></div>
+  </section>
+}
 
 const achievementFilters: ('all' | AchievementCategory)[] = ['all', 'olympiad', 'research', 'international', 'national', 'academic', 'badminton', 'community', 'other']
 function AchievementCertificateViewer({ achievement, onClose, trigger }: { achievement: Achievement; onClose: () => void; trigger: React.RefObject<HTMLButtonElement | null> }) {
@@ -665,7 +660,7 @@ function AboutEssay() {
     const observer = new IntersectionObserver((entries) => {
       if (!entries.some((entry) => entry.isIntersecting)) return
       paragraphs.forEach((paragraph, index) => {
-        paragraph.style.setProperty('--about-reveal-delay', `${index * 560}ms`)
+        paragraph.style.setProperty('--about-reveal-delay', `${index * 140}ms`)
         paragraph.classList.add('is-visible')
       })
       // Start one staggered sequence and never replay it when scrolling back.
@@ -709,7 +704,6 @@ function BadmintonFeature() {
 }
 function Contact() {
   usePageMeta('Contact', 'Contact Shandy Putra.')
-  const contactEmail = ['shandyitsme26', 'gmail.com'].join(String.fromCharCode(64))
   return <PageFrame><PageIntro number="11" eyebrow="CONTACT" title={<>Start a<br/><em>conversation.</em></>} description="For projects, competition info, school stuff, or just to hang out."/><section className="section-pad contact-body"><Eyebrow>FIND ME ONLINE</Eyebrow><div className="contact-cards"><a className="contact-card" href="https://www.instagram.com/s_pratama26/" target="_blank" rel="noreferrer" aria-label="Open Instagram profile in a new tab"><span className="contact-card-kicker">01 / SOCIAL</span><span className="contact-card-title">Instagram</span><span className="contact-card-arrow" aria-hidden="true">↗</span></a><div className="contact-card contact-card-upcoming"><span className="contact-card-kicker">02 / NETWORK</span><span className="contact-card-title">LinkedIn</span><span className="contact-card-status">SOON</span></div><a className="contact-card" href={`mailto:${contactEmail}`} aria-label="Compose an email to Shandy"><span className="contact-card-kicker">03 / EMAIL</span><span className="contact-card-title">Email me</span><span className="contact-card-arrow" aria-hidden="true">↗</span></a><a className="contact-card" href="https://github.com/shandypratamaa" target="_blank" rel="noreferrer" aria-label="Open GitHub profile in a new tab"><span className="contact-card-kicker">04 / CODE</span><span className="contact-card-title">GitHub</span><span className="contact-card-arrow" aria-hidden="true">↗</span></a></div></section></PageFrame>
 }
 function Aviation() {
@@ -771,7 +765,7 @@ function RoutedSite() {
     navigate(fallback, { replace: true })
   }
   const work = (path: string) => <Feature page={{ ...featurePages[path], path } as FeaturePage}/>
-  return <NavigationHistoryContext.Provider value={{ goBack }}><ScrollManager/><ScrollReveals/><RefreshHomeRedirect/><Routes>
+  return <NavigationHistoryContext.Provider value={{ goBack }}><ScrollManager/><ScrollReveals/><Routes>
     <Route path="/" element={<Home/>}/><Route path="/about" element={<About/>}/><Route path="/achievements" element={<Achievements/>}/>
     <Route path="/projects" element={<ProjectsPage/>}/><Route path="/research" element={work('/research')}/>
     <Route path="/automotive" element={<InterestFeature title="Automotive" intro="An interest in automotive." empty="Automotive notes and images coming later" variant="automotive"/>}/>
