@@ -84,8 +84,70 @@ const badmintonPhotos: InterestPhoto[] = [
   { src: '/images/interests/badminton-trophies.webp', title: 'Trophy collection', description: 'One moment from a series of tournaments. I kept competing and added more results afterward.', alt: 'Badminton trophies from a school competition.' },
 ]
 type ProjectImage = { src?: string; alt?: string; label: string; className?: string }
-type ProjectItem = { id: string; name: string; platform: string; stack: string[]; summary: string; description: string[]; images: ProjectImage[] }
+// A project description entry is either a plain paragraph (string) or a ready-made block such as <p> or <Eq>.
+type ProjectItem = { id: string; name: string; platform: string; stack: string[]; summary: string; description: React.ReactNode[]; images: ProjectImage[]; link?: string }
+
+// Small math typesetting helpers for project write-ups (no external math library needed).
+function Frac({ top, bottom }: { top: React.ReactNode; bottom: React.ReactNode }) {
+  return <span className="math-frac"><span>{top}</span><span>{bottom}</span></span>
+}
+function Eq({ label, speak, children }: { label: string; speak: string; children: React.ReactNode }) {
+  return <div className="math-eq"><span className="math-eq-body" role="math" aria-label={speak}>{children}</span><span className="math-eq-label">{label}</span></div>
+}
+const half = <Frac top="1" bottom="2"/>
+
 const projects: ProjectItem[] = [
+  {
+    id: 'windlylab', name: 'WindlyLab', platform: 'Web app · CFD wind tunnel', stack: ['React', 'TypeScript', 'Vite', 'Web Workers', 'Lattice Boltzmann'],
+    link: 'https://windlylab.vercel.app',
+    summary: 'A wind tunnel that runs in your browser: real airflow around wings, cars, and simple shapes, solved while you watch.',
+    description: [
+      'WindlyLab is an interactive computational fluid dynamics (CFD) simulator that runs entirely in the browser. Users place an airliner wing, a car, or a basic shape in a virtual wind tunnel and watch the airflow being solved in real time. The wing has a movable slat and double-slotted flaps. Lift, drag and stall respond to every change of angle, airspeed, temperature or wing setting.',
+      'It is built with React, TypeScript and Vite, and drawn on an HTML canvas. The solver runs in a Web Worker so the interface stays smooth. When the page is cross-origin isolated, the grid is split into bands of rows that helper threads advance in lockstep over SharedArrayBuffer memory, running about three times faster. The site is deployed on Vercel.',
+      <h3 className="project-modal-subheading">The solver</h3>,
+      'The core is a D2Q9 lattice Boltzmann method. Nine particle populations per cell stream and collide using the BGK model:',
+      <Eq label="BGK collision" speak="f i of x plus e i, t plus 1, equals f i minus the quantity f i minus f i equilibrium, divided by tau">
+        <i>f</i><sub>i</sub>(<b>x</b> + <b>e</b><sub>i</sub>, <i>t</i> + 1) = <i>f</i><sub>i</sub> − <Frac top={<><i>f</i><sub>i</sub> − <i>f</i><sub>i</sub><sup>eq</sup></>} bottom="τ"/>
+      </Eq>,
+      'The equilibrium distribution is',
+      <Eq label="Equilibrium" speak="f i equilibrium equals w i rho times the quantity 1 plus 3 e i dot u, plus 4.5 times e i dot u squared, minus 1.5 u squared">
+        <i>f</i><sub>i</sub><sup>eq</sup> = <i>w</i><sub>i</sub> ρ [ 1 + 3(<b>e</b><sub>i</sub>·<b>u</b>) + 4.5(<b>e</b><sub>i</sub>·<b>u</b>)<sup>2</sup> − 1.5 <b>u</b><sup>2</sup> ]
+      </Eq>,
+      'and the viscosity follows from the relaxation time τ. A Smagorinsky large-eddy model raises τ locally to keep high Reynolds numbers stable:',
+      <Eq label="Viscosity · Reynolds number" speak="nu equals tau minus one half, over 3. Reynolds number equals U L over nu">
+        <span>ν = <Frac top={<>τ − {half}</>} bottom="3"/></span>
+        <span><i>Re</i> = <Frac top={<><i>U</i><i>L</i></>} bottom="ν"/></span>
+      </Eq>,
+      'Curved walls use Bouzidi interpolated bounce-back, and forces come from momentum exchange. These give the drag and lift coefficients:',
+      <Eq label="Force coefficients" speak="C d equals F x over one half rho U squared L. C l equals F y over one half rho U squared L">
+        <span><i>C</i><sub>d</sub> = <Frac top={<><i>F</i><sub>x</sub></>} bottom={<>{half} ρ<i>U</i><sup>2</sup><i>L</i></>}/></span>
+        <span><i>C</i><sub>l</sub> = <Frac top={<><i>F</i><sub>y</sub></>} bottom={<>{half} ρ<i>U</i><sup>2</sup><i>L</i></>}/></span>
+      </Eq>,
+      'Absorbing boundary layers stop pressure waves from bouncing back off the tunnel walls. The solver is checked against the Schäfer–Turek cylinder benchmark and matches it within 6%.',
+      <h3 className="project-modal-subheading">Seeing the flow</h3>,
+      'Smoke is advected with a semi-Lagrangian MacCormack scheme. Streaklines are particles moved with second-order Runge–Kutta steps and drawn as smooth curves. A plain-English analysis watches the near-wall flow, detects separation, stall and vortex shedding, and estimates the Strouhal number.',
+      <h3 className="project-modal-subheading">Air and flight</h3>,
+      'Air properties come from the ideal-gas law and Sutherland’s viscosity law, and altitude follows the International Standard Atmosphere:',
+      <Eq label="Ideal-gas law" speak="rho equals p over R T">
+        ρ = <Frac top={<i>p</i>} bottom={<><i>R</i><i>T</i></>}/>
+      </Eq>,
+      'A flight panel turns the 2D section lift into a whole aircraft using lifting-line theory, then integrates the vertical motion over time:',
+      <Eq label="Lifting line · total lift" speak="C L equals C l times A R over A R plus 2. Lift equals one half rho V squared S C L">
+        <span><i>C</i><sub>L</sub> = <i>C</i><sub>l</sub> · <Frac top={<i>AR</i>} bottom={<><i>AR</i> + 2</>}/></span>
+        <span><i>L</i> = {half} ρ<i>V</i><sup>2</sup><i>S</i><i>C</i><sub>L</sub></span>
+      </Eq>,
+      'Cruise, Climb and Descend modes, plus an altitude-hold autopilot, adjust angle of attack, slats and flaps to fly a chosen rate and level off exactly. They are driven by lift curves measured with the solver itself, and stall warnings use the stall speed for the current setting.',
+      'The animated start page uses a vortex panel method with a Kutta condition on each wing element. A guided tutorial and a cheat sheet with one-click scenarios make the physics approachable for beginners, and 38 automated tests keep the physics honest.',
+    ],
+    images: [
+      { src: '/images/projects/windlylab/welcome.webp', alt: 'WindlyLab welcome page with streamlines flowing around an airliner wing with its slat and double-slotted flap extended.', label: 'Welcome page' },
+      { src: '/images/projects/windlylab/airliner-wing-smooth-flow.webp', alt: 'WindlyLab wind tunnel showing smooth, attached smoke flow around an airliner wing at 4 degrees angle of attack.', label: 'Airliner wing · smooth flow' },
+      { src: '/images/projects/windlylab/sports-car-spoiler.webp', alt: 'WindlyLab simulating a sports car with a rear spoiler, with flow analysis cards explaining lift and wake.', label: 'Sports car · rear spoiler' },
+      { src: '/images/projects/windlylab/flight-simulation-autopilot.webp', alt: 'WindlyLab flight simulation panel with the autopilot holding an airliner at 3,039 metres.', label: 'Flight simulation · autopilot hold' },
+      { src: '/images/projects/windlylab/slats-flaps-separation.webp', alt: 'WindlyLab airliner wing with slats and flaps deployed, showing large swirls as air separates from the wing.', label: 'Slats & flaps · flow separation' },
+      { src: '/images/projects/windlylab/velocity-field.webp', alt: 'WindlyLab velocity magnitude field in colour, showing fast and slow air around the high-lift wing and vortices in its wake.', label: 'Velocity field view' },
+    ],
+  },
   {
     id: 'spendly', name: 'Spendly', platform: 'iOS & macOS app', stack: ['Swift', 'SwiftUI', 'Mac Catalyst', 'WidgetKit'],
     summary: 'A personal finance and savings management app built with Swift and SwiftUI.',
@@ -463,7 +525,9 @@ function ProjectShowcase() {
   return <>
     <div className="project-grid">{projects.map((project) => {
       const cover = project.images.find((image) => image.src)
-      return <button className="project-card" key={project.id} onClick={(event) => openProject(project, event)} aria-haspopup="dialog">
+      return <div className="project-card-wrap" key={project.id}>
+      {project.link && <a className="project-live-link" href={project.link} target="_blank" rel="noreferrer" aria-label={`Open ${project.name} live in a new tab`}><span className="project-live-dot" aria-hidden="true"/>Live <span aria-hidden="true">↗</span></a>}
+      <button className="project-card" onClick={(event) => openProject(project, event)} aria-haspopup="dialog">
         {cover && <span className={`project-card-media ${cover.className ?? ''}`}><img src={cover.src} alt="" loading="lazy" decoding="async"/></span>}
         <span className="project-card-content">
           <span className="project-card-kicker">{project.platform}</span>
@@ -473,11 +537,12 @@ function ProjectShowcase() {
           <span className="project-card-cta">View project <span aria-hidden="true">↗</span></span>
         </span>
       </button>
+      </div>
     })}</div>
     {selectedProject && createPortal(<div className={`project-modal-backdrop ${projectDismiss.closing ? 'is-closing' : ''}`} onClick={(event) => { if (event.target === event.currentTarget) projectDismiss.dismiss(() => setSelectedProject(null)) }} onKeyDown={(event) => { if (event.key === 'Escape') projectDismiss.dismiss(() => setSelectedProject(null)) }}>
       <section className="project-modal" role="dialog" aria-modal="true" aria-labelledby="project-modal-title" aria-describedby="project-modal-summary">
-        <div className="project-modal-heading"><div><p className="eyebrow"><span className="eyebrow-line"/>{selectedProject.platform}</p><h2 id="project-modal-title">{selectedProject.name}</h2><p id="project-modal-summary" className="project-modal-summary">{selectedProject.summary}</p><span className="project-stack" aria-label="Built with">{selectedProject.stack.map((tool) => <span key={tool}>{tool}</span>)}</span></div><button ref={closeButton} className="project-modal-close" onClick={() => projectDismiss.dismiss(() => setSelectedProject(null))} aria-label="Close project details">×</button></div>
-        <div className="project-modal-description">{selectedProject.description.map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
+        <div className="project-modal-heading"><div><p className="eyebrow"><span className="eyebrow-line"/>{selectedProject.platform}</p><h2 id="project-modal-title">{selectedProject.name}</h2><p id="project-modal-summary" className="project-modal-summary">{selectedProject.summary}</p><span className="project-stack" aria-label="Built with">{selectedProject.stack.map((tool) => <span key={tool}>{tool}</span>)}</span>{selectedProject.link && <a className="button button-primary project-live-button" href={selectedProject.link} target="_blank" rel="noreferrer">Open {selectedProject.name} <span aria-hidden="true">↗</span></a>}</div><button ref={closeButton} className="project-modal-close" onClick={() => projectDismiss.dismiss(() => setSelectedProject(null))} aria-label="Close project details">×</button></div>
+        <div className="project-modal-description">{selectedProject.description.map((block, index) => typeof block === 'string' ? <p key={index}>{block}</p> : <React.Fragment key={index}>{block}</React.Fragment>)}</div>
         <div className="project-modal-gallery"><div className="project-gallery-heading"><div><p className="eyebrow"><span className="eyebrow-line"/>GALLERY</p><h3>Inside {selectedProject.name}.</h3></div><span>{selectedProject.images.length ? `${selectedProject.images.filter((image) => image.src).length} screenshots` : 'Screenshots to come'}</span></div><div className="project-image-slots" aria-label={`${selectedProject.name} screenshots`}>{selectedProject.images.length ? selectedProject.images.map((image, index) => image.src && image.alt ? <figure className={`project-image-card ${image.className ?? ''}`} key={image.src}><button className="project-image-preview-trigger" type="button" aria-haspopup="dialog" aria-label={`Preview ${image.label}`} onClick={(event) => openImagePreview(image, event)}><img className={image.className} src={image.src} alt={image.alt} loading="lazy" decoding="async"/><span className="project-image-zoom" aria-hidden="true">↗</span></button><figcaption>{image.label}</figcaption></figure> : <div className="project-image-pending" key={`pending-${index}`}><span aria-hidden="true">＋</span><span>{image.label}</span></div>) : <><div className="project-image-slot"><span aria-hidden="true">＋</span><span>App screenshot</span></div><div className="project-image-slot"><span aria-hidden="true">＋</span><span>Feature preview</span></div><div className="project-image-slot"><span aria-hidden="true">＋</span><span>More images</span></div></>}</div></div>
       </section>
     </div>, document.body)}
@@ -501,6 +566,31 @@ const homeHighlightTitles = [
 const isTopResult = (item: Achievement) => /Gold|Absolute Winner|Perfect Score|First Place|1st Place/.test(item.title)
 const inPersonCountries = new Set(achievements.flatMap((item) => item.detail?.includes('Offline') ? [item.detail.split(', ').pop() ?? ''] : []).filter(Boolean))
 
+// Rotating "Currently…" line under the hero buttons. Edit or add lines freely.
+const statusLines = [
+  'Currently tweaking codes',
+  'Currently teaching air to behave in WindlyLab',
+  'Currently convincing a Navier–Stokes solver to cooperate',
+  'Currently fixing one bug and politely ignoring two',
+  'Currently making Spendly guard my wishlist budget',
+  'Currently turning SAT mistakes into Scorly charts',
+  'Currently stalling a wing on purpose',
+]
+function HeroStatus() {
+  const [index, setIndex] = useState(0)
+  const [leaving, setLeaving] = useState(false)
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    let swap = 0
+    const timer = window.setInterval(() => {
+      setLeaving(true)
+      swap = window.setTimeout(() => { setIndex((current) => (current + 1) % statusLines.length); setLeaving(false) }, 280)
+    }, 3600)
+    return () => { window.clearInterval(timer); window.clearTimeout(swap) }
+  }, [])
+  return <p className="hero-status"><span aria-hidden="true"/><Link to="/#projects" className={leaving ? 'is-leaving' : ''}>{statusLines[index]}</Link></p>
+}
+
 function Home() {
   usePageMeta('Portfolio', 'Shandy Putra — Grade 12 student in Indonesia building software and competing in international STEM olympiads.')
   const highlights = homeHighlightTitles.flatMap((title) => achievements.find((item) => item.title === title) ?? [])
@@ -519,7 +609,7 @@ function Home() {
         <p className="hero-lead">I build software, compete in international STEM olympiads, and want to put <strong>AI and engineering</strong> to work on real problems.</p>
         <p className="hero-tagline">Curious by nature. Driven to discover.</p>
         <div className="hero-actions"><CvPreview/><Link className="button button-outline" to="/#contact">Get in touch <span aria-hidden="true">↗</span></Link></div>
-        <p className="hero-status"><span aria-hidden="true"/>Currently building <Link to="/#projects">Spendly</Link> and <Link to="/#projects">Scorly</Link></p>
+        <HeroStatus/>
       </div>
       <div className="hero-photo-frame"><HeroPhotoPreview/><span className="hero-photo-caption" aria-hidden="true">Robotics Research Centre</span></div>
     </section>
